@@ -1,0 +1,49 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Food Conversation · NTHU CultureMate</title>
+    <link rel="stylesheet" href="../src/styles.css" />
+  </head>
+  <body data-conversation-module="food" data-initial-query="How do I order stinky tofu without spicy?">
+    <header class="hero conversation-hero">
+      <nav class="nav"><a href="../index.html">← NTHU CultureMate</a><span>食 Food</span></nav>
+      <div class="hero-content compact">
+        <p class="eyebrow">Conversation page</p>
+        <h1>Food ordering help</h1>
+        <p class="hero-copy">Practice survival Chinese for restaurants, night markets, breakfast shops, and hand-shaken drink stores.</p>
+        <div class="module-row" aria-label="Switch conversation pages">
+          <a class="button-link" data-module="all" href="./ask.html">Ask Anything</a>
+          <a class="button-link" data-module="food" href="./food.html">食 Food</a>
+          <a class="button-link" data-module="campus" href="./campus.html">校園 Campus</a>
+          <a class="button-link" data-module="social" href="./social.html">交友 Social</a>
+        </div>
+      </div>
+    </header>
+    <main>
+      <section id="ask" class="panel ask-panel">
+        <div>
+          <p class="eyebrow">Food module</p>
+          <h2>Ask about ordering and food culture</h2>
+          <p>Try questions about stinky tofu, bubble tea, takeout, spicy level, cilantro, or pointing at a Chinese menu.</p>
+        </div>
+        <div class="ask-box">
+          <label for="query">Your food question</label>
+          <div class="input-row">
+            <input id="query" type="text" placeholder="I want to order bubble tea but I do not know what to say." />
+            <button id="ask-button" type="button">Ask</button>
+          </div>
+          <div id="examples" class="examples" aria-label="Example prompts"></div>
+        </div>
+      </section>
+      <section id="results" class="results" aria-live="polite"></section>
+      <section class="panel">
+        <p class="eyebrow">Food knowledge base</p>
+        <h2>Phrase and information cards</h2>
+        <div id="phrase-grid" class="phrase-grid"></div>
+      </section>
+    </main>
+    <script type="module" src="../src/app.js"></script>
+  </body>
+</html>
