@@ -1,0 +1,51 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>NTHU CultureMate</title>
+    <link rel="stylesheet" href="./src/styles.css" />
+  </head>
+  <body>
+    <header class="hero">
+      <nav class="nav"><span>NTHU CultureMate</span><a href="#ask">Ask Anything</a></nav>
+      <div class="hero-content">
+        <p class="eyebrow">RAG-style cultural adaptation support</p>
+        <h1>Learn what to say, when to say it, and which NTHU source to trust.</h1>
+        <p class="hero-copy">A bilingual MVP for international students navigating Taiwanese food culture, campus administration, and everyday social life at National Tsing Hua University.</p>
+        <div class="module-row" aria-label="CultureMate modules">
+          <button data-module="all" type="button">Ask Anything</button>
+          <button data-module="food" type="button">食 Food</button>
+          <button data-module="campus" type="button">校園 Campus</button>
+          <button data-module="social" type="button">交友 Social</button>
+        </div>
+      </div>
+    </header>
+
+    <main>
+      <section id="ask" class="panel ask-panel">
+        <div>
+          <p class="eyebrow">Retrieval demo</p>
+          <h2>Ask in English or Chinese</h2>
+          <p>The app retrieves curated snippets and formats the answer with Chinese, pinyin, English meaning, cultural context, and source metadata.</p>
+        </div>
+        <div class="ask-box">
+          <label for="query">Your question</label>
+          <div class="input-row">
+            <input id="query" type="text" placeholder="How do I apply for health insurance at NTHU?" />
+            <button id="ask-button" type="button">Ask</button>
+          </div>
+          <div id="examples" class="examples" aria-label="Example prompts"></div>
+        </div>
+      </section>
+
+      <section id="results" class="results" aria-live="polite"></section>
+
+      <section class="panel">
+        <p class="eyebrow">Seed knowledge base</p>
+        <h2>Phrase and information cards</h2>
+        <div id="phrase-grid" class="phrase-grid"></div>
+      </section>
+    </main>
+  </body>
+</html>
