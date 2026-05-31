@@ -1,0 +1,12 @@
+{
+  "name": "nthu-culturemate",
+  "version": "0.1.0",
+  "description": "RAG-style cultural adaptation support MVP for NTHU international students.",
+  "type": "module",
+  "scripts": {
+    "test": "node --test tests/*.test.js",
+    "start": "python3 -m http.server 4173"
+  },
+  "keywords": ["RAG", "NTHU", "international-students", "culture", "taiwan"],
+  "license": "MIT"
+}
