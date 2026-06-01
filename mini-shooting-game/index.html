@@ -1,0 +1,547 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Mini Shooting Game</title>
+  <style>
+    :root {
+      color-scheme: dark;
+      --bg: #08111f;
+      --panel: rgba(255, 255, 255, 0.08);
+      --text: #f7fafc;
+      --muted: #a8b3c7;
+      --accent: #6ee7ff;
+      --danger: #ff6b6b;
+      --success: #9cff8f;
+    }
+
+    * {
+      box-sizing: border-box;
+    }
+
+    body {
+      margin: 0;
+      min-height: 100vh;
+      display: grid;
+      place-items: center;
+      font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      color: var(--text);
+      background:
+        radial-gradient(circle at top left, rgba(110, 231, 255, 0.18), transparent 34rem),
+        radial-gradient(circle at bottom right, rgba(255, 107, 107, 0.16), transparent 30rem),
+        var(--bg);
+    }
+
+    .game-shell {
+      width: min(96vw, 760px);
+      padding: 20px;
+    }
+
+    .header {
+      display: flex;
+      justify-content: space-between;
+      gap: 16px;
+      align-items: flex-start;
+      margin-bottom: 14px;
+    }
+
+    h1 {
+      margin: 0 0 6px;
+      font-size: clamp(1.5rem, 4vw, 2.4rem);
+      letter-spacing: 0.04em;
+    }
+
+    .subtitle {
+      margin: 0;
+      color: var(--muted);
+      line-height: 1.6;
+    }
+
+    .scoreboard {
+      display: grid;
+      grid-template-columns: repeat(3, minmax(70px, 1fr));
+      gap: 8px;
+      min-width: 250px;
+    }
+
+    .score-card {
+      padding: 10px;
+      text-align: center;
+      border: 1px solid rgba(255, 255, 255, 0.14);
+      border-radius: 14px;
+      background: var(--panel);
+      backdrop-filter: blur(8px);
+    }
+
+    .score-card span {
+      display: block;
+      color: var(--muted);
+      font-size: 0.75rem;
+    }
+
+    .score-card strong {
+      display: block;
+      margin-top: 2px;
+      font-size: 1.2rem;
+    }
+
+    .stage-wrap {
+      position: relative;
+      overflow: hidden;
+      border: 1px solid rgba(255, 255, 255, 0.18);
+      border-radius: 20px;
+      background: linear-gradient(180deg, rgba(255, 255, 255, 0.08), rgba(255, 255, 255, 0.02));
+      box-shadow: 0 24px 80px rgba(0, 0, 0, 0.38);
+    }
+
+    canvas {
+      display: block;
+      width: 100%;
+      aspect-ratio: 4 / 3;
+      background: transparent;
+      touch-action: none;
+    }
+
+    .overlay {
+      position: absolute;
+      inset: 0;
+      display: grid;
+      place-items: center;
+      padding: 24px;
+      text-align: center;
+      background: rgba(8, 17, 31, 0.72);
+    }
+
+    .overlay.hidden {
+      display: none;
+    }
+
+    .panel {
+      width: min(92%, 420px);
+      padding: 24px;
+      border: 1px solid rgba(255, 255, 255, 0.16);
+      border-radius: 18px;
+      background: rgba(11, 22, 40, 0.92);
+    }
+
+    .panel h2 {
+      margin: 0 0 10px;
+      font-size: 1.7rem;
+    }
+
+    .panel p {
+      margin: 8px 0;
+      color: var(--muted);
+      line-height: 1.7;
+    }
+
+    button {
+      margin-top: 16px;
+      border: 0;
+      border-radius: 999px;
+      padding: 12px 22px;
+      color: #07111f;
+      background: var(--accent);
+      font-weight: 800;
+      cursor: pointer;
+      box-shadow: 0 10px 30px rgba(110, 231, 255, 0.28);
+    }
+
+    button:active {
+      transform: translateY(1px);
+    }
+
+    .controls {
+      display: flex;
+      flex-wrap: wrap;
+      justify-content: space-between;
+      gap: 10px;
+      margin-top: 12px;
+      color: var(--muted);
+      font-size: 0.92rem;
+      line-height: 1.5;
+    }
+
+    kbd {
+      padding: 2px 6px;
+      border-radius: 6px;
+      color: var(--text);
+      background: rgba(255, 255, 255, 0.12);
+      border: 1px solid rgba(255, 255, 255, 0.16);
+      font-family: inherit;
+    }
+
+    @media (max-width: 680px) {
+      .header {
+        flex-direction: column;
+      }
+
+      .scoreboard {
+        width: 100%;
+        min-width: 0;
+      }
+    }
+  </style>
+</head>
+<body>
+  <main class="game-shell">
+    <section class="header" aria-label="Game information">
+      <div>
+        <h1>Mini Shooting Game</h1>
+        <p class="subtitle">左右移動、發射子彈、擊落敵人。敵人碰到底部或撞到玩家會扣生命。</p>
+      </div>
+      <div class="scoreboard" aria-live="polite">
+        <div class="score-card"><span>Score</span><strong id="score">0</strong></div>
+        <div class="score-card"><span>Lives</span><strong id="lives">3</strong></div>
+        <div class="score-card"><span>Best</span><strong id="best">0</strong></div>
+      </div>
+    </section>
+
+    <section class="stage-wrap">
+      <canvas id="game" width="720" height="540" aria-label="Shooting game canvas"></canvas>
+      <div class="overlay" id="overlay">
+        <div class="panel">
+          <h2 id="overlayTitle">準備開始</h2>
+          <p id="overlayText">按下開始後，使用鍵盤或觸控控制飛船。</p>
+          <p><kbd>←</kbd> <kbd>→</kbd> / <kbd>A</kbd> <kbd>D</kbd> 移動，<kbd>Space</kbd> 射擊。</p>
+          <button id="startBtn" type="button">Start Game</button>
+        </div>
+      </div>
+    </section>
+
+    <section class="controls">
+      <div>鍵盤：<kbd>←</kbd> <kbd>→</kbd> 或 <kbd>A</kbd> <kbd>D</kbd> 移動，<kbd>Space</kbd> 射擊</div>
+      <div>手機：拖曳畫面移動，點一下發射</div>
+    </section>
+  </main>
+
+  <script>
+    const canvas = document.querySelector('#game');
+    const ctx = canvas.getContext('2d');
+    const scoreEl = document.querySelector('#score');
+    const livesEl = document.querySelector('#lives');
+    const bestEl = document.querySelector('#best');
+    const overlay = document.querySelector('#overlay');
+    const overlayTitle = document.querySelector('#overlayTitle');
+    const overlayText = document.querySelector('#overlayText');
+    const startBtn = document.querySelector('#startBtn');
+
+    const keys = new Set();
+    const bullets = [];
+    const enemies = [];
+    const particles = [];
+
+    const state = {
+      running: false,
+      score: 0,
+      lives: 3,
+      best: Number(localStorage.getItem('mini-shooter-best') || 0),
+      lastTime: 0,
+      enemyTimer: 0,
+      shootTimer: 0,
+      difficulty: 1,
+    };
+
+    const player = {
+      x: canvas.width / 2,
+      y: canvas.height - 58,
+      width: 44,
+      height: 42,
+      speed: 380,
+    };
+
+    bestEl.textContent = state.best;
+
+    function resetGame() {
+      state.running = true;
+      state.score = 0;
+      state.lives = 3;
+      state.lastTime = performance.now();
+      state.enemyTimer = 0;
+      state.shootTimer = 0;
+      state.difficulty = 1;
+      player.x = canvas.width / 2;
+      bullets.length = 0;
+      enemies.length = 0;
+      particles.length = 0;
+      overlay.classList.add('hidden');
+      updateHud();
+      requestAnimationFrame(loop);
+    }
+
+    function updateHud() {
+      scoreEl.textContent = state.score;
+      livesEl.textContent = state.lives;
+      bestEl.textContent = state.best;
+    }
+
+    function loop(time) {
+      if (!state.running) return;
+
+      const delta = Math.min((time - state.lastTime) / 1000, 0.033);
+      state.lastTime = time;
+      update(delta);
+      draw();
+
+      if (state.running) requestAnimationFrame(loop);
+    }
+
+    function update(delta) {
+      state.difficulty = 1 + state.score / 800;
+      state.enemyTimer -= delta;
+      state.shootTimer -= delta;
+
+      const moveLeft = keys.has('ArrowLeft') || keys.has('a');
+      const moveRight = keys.has('ArrowRight') || keys.has('d');
+
+      if (moveLeft) player.x -= player.speed * delta;
+      if (moveRight) player.x += player.speed * delta;
+      player.x = clamp(player.x, player.width / 2 + 8, canvas.width - player.width / 2 - 8);
+
+      if (keys.has(' ') || keys.has('Spacebar')) shoot();
+
+      if (state.enemyTimer <= 0) {
+        spawnEnemy();
+        state.enemyTimer = Math.max(0.35, 1.05 - state.difficulty * 0.12);
+      }
+
+      for (let i = bullets.length - 1; i >= 0; i--) {
+        bullets[i].y -= bullets[i].speed * delta;
+        if (bullets[i].y < -20) bullets.splice(i, 1);
+      }
+
+      for (let i = enemies.length - 1; i >= 0; i--) {
+        const enemy = enemies[i];
+        enemy.y += enemy.speed * delta;
+        enemy.x += Math.sin(enemy.y * 0.02 + enemy.seed) * enemy.wave * delta;
+
+        if (enemy.y - enemy.size > canvas.height) {
+          enemies.splice(i, 1);
+          damagePlayer();
+          continue;
+        }
+
+        if (rectsOverlap(player.x - player.width / 2, player.y - player.height / 2, player.width, player.height, enemy.x - enemy.size / 2, enemy.y - enemy.size / 2, enemy.size, enemy.size)) {
+          createExplosion(enemy.x, enemy.y, enemy.color);
+          enemies.splice(i, 1);
+          damagePlayer();
+        }
+      }
+
+      checkBulletHits();
+
+      for (let i = particles.length - 1; i >= 0; i--) {
+        const p = particles[i];
+        p.x += p.vx * delta;
+        p.y += p.vy * delta;
+        p.life -= delta;
+        if (p.life <= 0) particles.splice(i, 1);
+      }
+    }
+
+    function shoot() {
+      if (state.shootTimer > 0) return;
+      bullets.push({ x: player.x, y: player.y - 30, speed: 620, radius: 5 });
+      state.shootTimer = 0.16;
+    }
+
+    function spawnEnemy() {
+      const size = random(26, 48);
+      enemies.push({
+        x: random(size, canvas.width - size),
+        y: -size,
+        size,
+        speed: random(80, 150) * state.difficulty,
+        wave: random(0, 55),
+        seed: Math.random() * 100,
+        color: Math.random() > 0.5 ? '#ff6b6b' : '#ffd166',
+      });
+    }
+
+    function checkBulletHits() {
+      for (let i = enemies.length - 1; i >= 0; i--) {
+        const enemy = enemies[i];
+        for (let j = bullets.length - 1; j >= 0; j--) {
+          const bullet = bullets[j];
+          const distance = Math.hypot(enemy.x - bullet.x, enemy.y - bullet.y);
+          if (distance < enemy.size / 2 + bullet.radius) {
+            createExplosion(enemy.x, enemy.y, enemy.color);
+            enemies.splice(i, 1);
+            bullets.splice(j, 1);
+            state.score += Math.round(40 + enemy.size);
+            if (state.score > state.best) {
+              state.best = state.score;
+              localStorage.setItem('mini-shooter-best', String(state.best));
+            }
+            updateHud();
+            break;
+          }
+        }
+      }
+    }
+
+    function damagePlayer() {
+      state.lives -= 1;
+      createExplosion(player.x, player.y, '#6ee7ff');
+      updateHud();
+      if (state.lives <= 0) endGame();
+    }
+
+    function endGame() {
+      state.running = false;
+      overlayTitle.textContent = 'Game Over';
+      overlayText.textContent = `你的分數是 ${state.score}。再試一次，挑戰更高分。`;
+      startBtn.textContent = 'Restart';
+      overlay.classList.remove('hidden');
+    }
+
+    function draw() {
+      ctx.clearRect(0, 0, canvas.width, canvas.height);
+      drawStars();
+      drawPlayer();
+      drawBullets();
+      drawEnemies();
+      drawParticles();
+    }
+
+    function drawStars() {
+      ctx.save();
+      ctx.fillStyle = 'rgba(255, 255, 255, 0.65)';
+      for (let i = 0; i < 70; i++) {
+        const x = (i * 97 + state.score * 0.04) % canvas.width;
+        const y = (i * 53 + performance.now() * 0.018) % canvas.height;
+        const r = (i % 3) + 0.6;
+        ctx.globalAlpha = 0.25 + (i % 5) * 0.12;
+        ctx.beginPath();
+        ctx.arc(x, y, r, 0, Math.PI * 2);
+        ctx.fill();
+      }
+      ctx.restore();
+    }
+
+    function drawPlayer() {
+      ctx.save();
+      ctx.translate(player.x, player.y);
+      ctx.fillStyle = '#6ee7ff';
+      ctx.strokeStyle = 'rgba(255,255,255,0.9)';
+      ctx.lineWidth = 2;
+      ctx.beginPath();
+      ctx.moveTo(0, -26);
+      ctx.lineTo(25, 24);
+      ctx.lineTo(0, 12);
+      ctx.lineTo(-25, 24);
+      ctx.closePath();
+      ctx.fill();
+      ctx.stroke();
+      ctx.fillStyle = '#9cff8f';
+      ctx.fillRect(-7, 10, 14, 16);
+      ctx.restore();
+    }
+
+    function drawBullets() {
+      ctx.save();
+      for (const bullet of bullets) {
+        const gradient = ctx.createRadialGradient(bullet.x, bullet.y, 0, bullet.x, bullet.y, 14);
+        gradient.addColorStop(0, '#ffffff');
+        gradient.addColorStop(0.45, '#9cff8f');
+        gradient.addColorStop(1, 'rgba(156, 255, 143, 0)');
+        ctx.fillStyle = gradient;
+        ctx.beginPath();
+        ctx.arc(bullet.x, bullet.y, 14, 0, Math.PI * 2);
+        ctx.fill();
+      }
+      ctx.restore();
+    }
+
+    function drawEnemies() {
+      ctx.save();
+      for (const enemy of enemies) {
+        ctx.translate(enemy.x, enemy.y);
+        ctx.rotate(enemy.y * 0.01);
+        ctx.fillStyle = enemy.color;
+        ctx.strokeStyle = 'rgba(255,255,255,0.75)';
+        ctx.lineWidth = 2;
+        ctx.beginPath();
+        ctx.rect(-enemy.size / 2, -enemy.size / 2, enemy.size, enemy.size);
+        ctx.fill();
+        ctx.stroke();
+        ctx.setTransform(1, 0, 0, 1, 0, 0);
+      }
+      ctx.restore();
+    }
+
+    function drawParticles() {
+      ctx.save();
+      for (const p of particles) {
+        ctx.globalAlpha = Math.max(p.life / p.maxLife, 0);
+        ctx.fillStyle = p.color;
+        ctx.beginPath();
+        ctx.arc(p.x, p.y, p.radius, 0, Math.PI * 2);
+        ctx.fill();
+      }
+      ctx.restore();
+    }
+
+    function createExplosion(x, y, color) {
+      for (let i = 0; i < 16; i++) {
+        const angle = Math.random() * Math.PI * 2;
+        const speed = random(70, 210);
+        const life = random(0.25, 0.65);
+        particles.push({
+          x,
+          y,
+          vx: Math.cos(angle) * speed,
+          vy: Math.sin(angle) * speed,
+          radius: random(2, 5),
+          color,
+          life,
+          maxLife: life,
+        });
+      }
+    }
+
+    function clamp(value, min, max) {
+      return Math.min(Math.max(value, min), max);
+    }
+
+    function random(min, max) {
+      return Math.random() * (max - min) + min;
+    }
+
+    function rectsOverlap(ax, ay, aw, ah, bx, by, bw, bh) {
+      return ax < bx + bw && ax + aw > bx && ay < by + bh && ay + ah > by;
+    }
+
+    startBtn.addEventListener('click', resetGame);
+
+    window.addEventListener('keydown', (event) => {
+      if (['ArrowLeft', 'ArrowRight', ' ', 'Spacebar'].includes(event.key)) event.preventDefault();
+      keys.add(event.key);
+      if (!state.running && event.key === 'Enter') resetGame();
+    });
+
+    window.addEventListener('keyup', (event) => {
+      keys.delete(event.key);
+    });
+
+    canvas.addEventListener('pointermove', (event) => {
+      if (!state.running) return;
+      const rect = canvas.getBoundingClientRect();
+      const scaleX = canvas.width / rect.width;
+      player.x = clamp((event.clientX - rect.left) * scaleX, player.width / 2 + 8, canvas.width - player.width / 2 - 8);
+    });
+
+    canvas.addEventListener('pointerdown', (event) => {
+      event.preventDefault();
+      if (!state.running) {
+        resetGame();
+        return;
+      }
+      shoot();
+    });
+
+    draw();
+  </script>
+</body>
+</html>
