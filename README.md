@@ -8,6 +8,21 @@ NTHU CultureMate is an MVP of a RAG-style cultural adaptation support system for
 
 The app is intentionally lightweight: it runs as a static web app and uses a local curated knowledge base plus transparent source metadata to demonstrate the retrieval-and-generation flow before connecting to a production vector database or LLM.
 
+## Mini Shooting Game
+
+A standalone browser shooting game has been added at:
+
+```text
+mini-shooting-game/index.html
+```
+
+Open the file directly in a browser, or serve the repository as a static site and visit `/mini-shooting-game/`.
+
+Controls:
+
+- Keyboard: Left / Right arrow keys or A / D to move; Space to shoot.
+- Mobile: Drag on the canvas to move; tap to shoot.
+
 ## MVP Features
 
 1. Home screen with **Food**, **Campus**, **Social**, and **Ask Anything** entry points.
